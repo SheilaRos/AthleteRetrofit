@@ -7,9 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Created by dam on 15/12/16.
- */
+
 public class RestAsync {
     private static Retrofit retrofit;
     public static void main(String[] args) throws IOException {
