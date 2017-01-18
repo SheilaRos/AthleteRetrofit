@@ -1,13 +1,10 @@
-import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.Path;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
-
-import static sun.audio.AudioPlayer.player;
 
 
 public class RestSynchronous {
@@ -23,72 +20,77 @@ public class RestSynchronous {
 
         AthleteService athleteService = retrofit.create(AthleteService.class);
 
-        //creamos la llamada a la función de obtener todos los atletas
+        /*creamos la llamada a la función de obtener todos los atletas
         Call<List<Athlete>> callAllAthletes = athleteService.getAllAthlete();
-        //Obtenemos la respuesta a la llamada (ejecutamos una respuesta)
+        Obtenemos la respuesta a la llamada (ejecutamos una respuesta)
         Response<List<Athlete>> response = callAllAthletes.execute();
-        //si obtiene una respuesta satisfactoria
-        if(response.isSuccessful()){
-            List<Athlete> athleteList = response.body();
-            System.out.println("Status code: " + response.code() + System.lineSeparator() +
+        Simplificado: */
+        //Bloquea a la espera de que el servidor conteste
+
+        Response<List<Athlete>> responseAllAthlete = athleteService.getAllAthlete().execute();
+        if (responseAllAthlete.isSuccessful()) {
+            List<Athlete> athleteList = responseAllAthlete.body();
+            System.out.println("Status code: " + responseAllAthlete.code() + System.lineSeparator() +
                     "GET all athletes: " + athleteList);
-        }else{ //si no obtiene una respuesta satisfactoria
-            System.out.println("Status code: " + response.code() +
-                    "Message error: " + response.errorBody());
+        } else { //si no obtiene una respuesta satisfactoria
+            System.out.println("Status code: " + responseAllAthlete.code() +
+                    "Message error: " + responseAllAthlete.errorBody());
         }
+
 
         //creamos la llamada a una opcion de url que sabemos que dará error ya que no existe
-        Call<List<Athlete>> callUrlError = athleteService.getError();
-        response = callUrlError.execute();
+        Response<List<Athlete>> responseUrlError = athleteService.getError().execute();
         //como sabemos que no será satisfactoria solo creamos el mensaje de insatisfactorio
-        if(!response.isSuccessful()){
-            System.out.println("Status code: "+response.code() + " Message error: "+response.raw());
+        if (!responseUrlError.isSuccessful()) {
+            System.out.println("Status code: " + responseUrlError.code() + " Message error: " + responseUrlError.raw());
         }
-
-        //creamos una llamada para llamar a un atleta en concreto
-        Call<Athlete> callAthlete = athleteService.getAthlete(3L);
-        Response<Athlete> responseAthlete = callAthlete.execute();
-
-        if(responseAthlete.isSuccessful()) {
-            System.out.println("GET ONE->Status code: "+responseAthlete.code()+ " Athlete: "+responseAthlete.body());
-        }else{
-            System.out.println("Status code: "+responseAthlete.code() + "Message error: "+responseAthlete.errorBody());
-        }
-
-        //eliminar athleta
-        Call<Void> callAthleteDelete = athleteService.deleteAthlete();
-        Response<Void> responseDelete = callAthleteDelete.execute();
-        System.out.println("DELETE status code: " + responseDelete.code());
-
-        callAllAthletes = athleteService.getAllAthlete();
-        response = callAllAthletes.execute();
-
-        System.out.println("Comprobación del delete " +
-                "Status code: " + response.code() + System.lineSeparator() +
-                "GET players: " + response.body());
-
 
 
         //Post
         Athlete athlete = new Athlete();
         athlete.setName("John");
+        athlete.setSurname("Whick");
+        athlete.setNacionality("Alola");
+        athlete.setBirthday(LocalDate.of(1994, 05, 16));
+        Response<Athlete> postAthletes = athleteService.createAthlete(athlete).execute();
 
-        Call<Athlete> callAthletes = athleteService.createAthlete(athlete);
-        Response<Athlete> responseAthlet= callAthletes.execute();
-
-        if(responseAthlet.isSuccessful()) {
-            Athlete athleteResp = responseAthlet.body();
-            System.out.println("Status code: " + responseAthlet.code() + System.lineSeparator() +
+        if (postAthletes.isSuccessful()) {
+            Athlete athleteResp = postAthletes.body();
+            System.out.println("Status code: " + postAthletes.code() + System.lineSeparator() +
                     "POST player: " + athleteResp);
+
+            //creamos una llamada para llamar a un atleta en concreto
+            Response<Athlete> responseOneAthlete = athleteService.getAthlete(athleteResp.getId()).execute();
+            if (responseOneAthlete.isSuccessful()) {
+                System.out.println("GET ONE->Status code: " + responseOneAthlete.code() + " Athlete: " + responseOneAthlete.body());
+            } else {
+                System.out.println("Status code: " + responseOneAthlete.code() + "Message error: " + responseOneAthlete.errorBody());
+            }
 
             //Put
             athleteResp.setNacionality("MICASA");
-            callAllAthletes= athleteService.updateAthlete(athleteResp);
-            responseAthlet= callAllAthletes.execute();
+            Response<Athlete> putAthlete = athleteService.updateAthlete(athleteResp).execute();
 
-            System.out.println("Status code: " + responseAthlet.code() + System.lineSeparator() +
-                    "PUT player: " + responseAthlet.body());
+            if (responseOneAthlete.isSuccessful()) {
+                System.out.println("Status code: " + putAthlete.code() + System.lineSeparator() +
+                        "PUT player: " + putAthlete.body());
+            } else {
+                System.out.println("Status code: " + putAthlete.code() + "Message error: " + putAthlete.errorBody());
+            }
+
+            //eliminar athleta
+            Response<Void> athleteDelete = athleteService.deleteAthlete(athleteResp.getId()).execute();
+
+            System.out.println("DELETE status code: " + athleteDelete.code());
+
+            //Comprobamos que se ha borrado
+            responseAllAthlete = athleteService.getAllAthlete().execute();
+
+            System.out.println("Comprobación del delete " +
+                    "Status code: " + responseAllAthlete.code() + System.lineSeparator() +
+                    "GET players: " + responseAllAthlete.body());
 
         }
+    }
 
 }

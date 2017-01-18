@@ -16,7 +16,7 @@ public class RestAsync {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         AthleteService athleteService = retrofit.create(AthleteService.class);
-
+        //Cuando hace el enqueue continua, no bloquea, cuando se resuelve la petición se ejecutará la respuesta en el callback
         Call<List<Athlete>> call = athleteService.getAllAthlete();
         call.enqueue(new Callback<List<Athlete>>() {
             @Override
